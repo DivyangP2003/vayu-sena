@@ -87,14 +87,14 @@ export default function HealthImpactsPage() {
                     <p className="text-sm text-[#7ab898] font-mono pl-4">{advisory.generalPopulation}</p>
                   </div>
 
-                  {/* Children */}
+                  {/* Children & Elderly */}
                   <div className="border-l-2" style={{ borderColor: info.color }}>
                     <div className="flex items-center gap-2 mb-3 pl-4">
                       <Activity size={16} style={{ color: info.color }} />
                       <h3 className="font-display font-600 text-[#e8f5ee]">Children & Elderly</h3>
                     </div>
                     <p className="text-sm text-[#7ab898] font-mono pl-4">
-                      {category === 'GOOD' ? advisory.children : category === 'SATISFACTORY' ? advisory.children : category === 'MODERATELY_POLLUTED' ? advisory.children : category === 'POOR' ? advisory.elderly : category === 'VERY_POOR' ? advisory.elderly : advisory.elderly}
+                      {['GOOD', 'SATISFACTORY', 'MODERATELY_POLLUTED'].includes(category) ? advisory.children : advisory.elderly}
                     </p>
                   </div>
 
