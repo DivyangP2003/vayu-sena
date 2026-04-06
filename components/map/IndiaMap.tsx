@@ -2,8 +2,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { AQI_LEVELS } from '@/lib/types';
 import 'leaflet/dist/leaflet.css';
-import 'leaflet.markercluster/dist/MarkerCluster.css';
-import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
 
 interface StationPoint {
   station: string;
@@ -83,6 +81,9 @@ export default function IndiaMap({ data, onStationSelect, selectedStation, searc
         .leaflet-control-zoom a:hover { color:#00ff88!important; }
         .vayu-marker { transition: transform 0.1s; }
         .vayu-marker:hover { transform: scale(1.15); }
+        .marker-cluster { background-color: rgba(0, 255, 136, 0.1); border: 1px solid rgba(0, 255, 136, 0.3); border-radius: 20px; }
+        .marker-cluster div { background-color: rgba(0, 255, 136, 0.2); border-radius: 15px; }
+        .marker-cluster span { background-color: #00ff88; color: #0a0f0d; font-weight: bold; }
       `;
       document.head.appendChild(style);
 
