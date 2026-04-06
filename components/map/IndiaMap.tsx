@@ -27,7 +27,7 @@ interface IndiaMapProps {
 export default function IndiaMap({ data, onStationSelect, selectedStation, searchMarker }: IndiaMapProps) {
   const mapRef = useRef<HTMLDivElement>(null);
   const leafletMapRef = useRef<any>(null);
-  const markerClusterGroupRef = useRef<any>(null);
+  const markersLayerRef = useRef<any>(null);
   const searchLayerRef = useRef<any>(null);
   const [stationCount, setStationCount] = useState(0);
 
@@ -36,7 +36,6 @@ export default function IndiaMap({ data, onStationSelect, selectedStation, searc
 
     const initMap = async () => {
       const L = (await import('leaflet')).default;
-      const MarkerClusterGroup = (await import('leaflet.markercluster')).default;
 
       if (leafletMapRef.current) {
         leafletMapRef.current.remove();
@@ -58,16 +57,9 @@ export default function IndiaMap({ data, onStationSelect, selectedStation, searc
         { subdomains: 'abcd', maxZoom: 19 }
       ).addTo(map);
 
-      // Create marker cluster group
-      const markerClusterGroup = new MarkerClusterGroup({
-        maxClusterRadius: 50,
-        disableClusteringAtZoom: 9,
-        chunkedLoading: true,
-        chunkSize: 100,
-        showCoverageOnHover: true,
-      });
-      markerClusterGroupRef.current = markerClusterGroup;
-      map.addLayer(markerClusterGroup);
+      // Markers layer group (all 500+ stations)
+      const markersLayer = L.layerGroup().addTo(map);
+      markersLayerRef.current = markersLayer;
       searchLayerRef.current = L.layerGroup().addTo(map);
 
       // Inject styles
@@ -100,11 +92,11 @@ export default function IndiaMap({ data, onStationSelect, selectedStation, searc
 
   // Update markers when data changes
   useEffect(() => {
-    if (!leafletMapRef.current || !markerClusterGroupRef.current || !data.length) return;
+    if (!leafletMapRef.current || !markersLayerRef.current || !data.length) return;
 
     const updateMarkers = async () => {
       const L = (await import('leaflet')).default;
-      markerClusterGroupRef.current.clearLayers();
+      markersLayerRef.current.clearLayers();
       setStationCount(data.length);
 
       const zoom = leafletMapRef.current.getZoom();
@@ -155,7 +147,7 @@ export default function IndiaMap({ data, onStationSelect, selectedStation, searc
 
         marker.bindPopup(popupHtml, { closeButton: false, className: 'vayu-popup' });
         marker.on('click', () => { if (onStationSelect) onStationSelect(station); });
-        markerClusterGroupRef.current.addLayer(marker);
+        markersLayerRef.current.addLayer(marker);
       });
     };
 

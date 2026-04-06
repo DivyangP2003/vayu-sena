@@ -28,7 +28,6 @@
     "recharts": "^2.12.7",
     "react-leaflet": "^4.2.1",
     "leaflet": "^1.9.4",
-    "leaflet.markercluster": "^1.5.3",
     "swr": "^2.2.5"
   },
   "devDependencies": {
