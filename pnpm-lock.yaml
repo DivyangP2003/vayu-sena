@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@google/generative-ai':
+        specifier: ^0.12.0
+        version: 0.12.0
       '@googlemaps/js-api-loader':
         specifier: ^1.16.6
         version: 1.16.10
@@ -136,6 +139,10 @@ packages:
   '@eslint/js@8.57.1':
     resolution: {integrity: sha512-d9zaMRSTIKDLhctzH12MtXvJKSSUhaHcjV+2Z+GK+EEY7XKpP5yR4x+N3TAcHTcu963nIr+TMcCb4DBCYX1z6Q==}
     engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
+
+  '@google/generative-ai@0.12.0':
+    resolution: {integrity: sha512-krWjurjEUHSFhCX4lGHMOhbnpBfYZGU31mpHpPBQwcfWm0T+/+wxC4UCAJfkxxc3/HvGJVG8r4AqrffaeDHDlA==}
+    engines: {node: '>=18.0.0'}
 
   '@googlemaps/js-api-loader@1.16.10':
     resolution: {integrity: sha512-c2erv2k7P2ilYzMmtYcMgAR21AULosQuUHJbStnrvRk2dG93k5cqptDrh9A8p+ZNlyhiqEOgHW7N9PAizdUM7Q==}
@@ -2378,6 +2385,8 @@ snapshots:
       - supports-color
 
   '@eslint/js@8.57.1': {}
+
+  '@google/generative-ai@0.12.0': {}
 
   '@googlemaps/js-api-loader@1.16.10': {}
 

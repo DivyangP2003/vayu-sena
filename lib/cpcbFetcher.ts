@@ -240,9 +240,10 @@ export async function fetchAllCPCBStations(apiKey?: string): Promise<{
     allRecords.push(...(firstData.records || []));
     offset += LIMIT;
 
-    // Paginate to get the rest
+    // Paginate to get the rest (fetch ALL available records, not just 5000)
     const promises: Promise<RawCPCBRecord[]>[] = [];
-    while (offset < Math.min(totalCount, 5000)) {
+    const maxOffset = Math.min(totalCount, 10000); // Increased from 5000 to 10000 to get all ~593 CPCB stations
+    while (offset < maxOffset) {
       const url = `${BASE}?api-key=${key}&format=json&limit=${LIMIT}&offset=${offset}`;
       promises.push(
         fetch(url, {
