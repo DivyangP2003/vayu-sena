@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Wind, Map, AlertTriangle, FileText, Zap, ArrowRight, Activity, TrendingUp } from 'lucide-react';
+import { Wind, Map, AlertTriangle, FileText, Zap, ArrowRight, Activity, TrendingUp, BookOpen, Scale } from 'lucide-react';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import { AQIBadge, AQIScaleBar } from '@/components/ui/AQIBadge';
@@ -179,6 +179,20 @@ export default function HomePage() {
               title: 'Trend Analytics',
               desc: '14-day historical AQI trends, PM2.5 vs PM10 comparison, and seasonal pollution pattern analysis.',
               href: '/dashboard',
+            },
+            {
+              icon: BookOpen,
+              color: '#00ff88',
+              title: 'Education Hub',
+              desc: 'Learn about AQI scales, air pollutants, health impacts, and prevention strategies. Science-backed information.',
+              href: '/education',
+            },
+            {
+              icon: Scale,
+              color: '#a8ff3e',
+              title: 'City Comparison',
+              desc: 'Compare air quality across multiple cities. Identify trends, find the cleanest areas, and analyze regional patterns.',
+              href: '/compare',
             },
           ].map(({ icon: Icon, color, title, desc, href }) => (
             <Link key={title} href={href} className="group rounded-xl border border-[rgba(0,255,136,0.07)] bg-[#111f17] p-5 hover:border-[rgba(0,255,136,0.2)] transition-all">

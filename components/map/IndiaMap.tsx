@@ -2,6 +2,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { AQI_LEVELS } from '@/lib/types';
 import 'leaflet/dist/leaflet.css';
+import 'leaflet.markercluster/dist/MarkerCluster.css';
+import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
+
 interface StationPoint {
   station: string;
   city: string;
@@ -26,7 +29,7 @@ interface IndiaMapProps {
 export default function IndiaMap({ data, onStationSelect, selectedStation, searchMarker }: IndiaMapProps) {
   const mapRef = useRef<HTMLDivElement>(null);
   const leafletMapRef = useRef<any>(null);
-  const markersLayerRef = useRef<any>(null);
+  const markerClusterGroupRef = useRef<any>(null);
   const searchLayerRef = useRef<any>(null);
   const [stationCount, setStationCount] = useState(0);
 
@@ -35,10 +38,7 @@ export default function IndiaMap({ data, onStationSelect, selectedStation, searc
 
     const initMap = async () => {
       const L = (await import('leaflet')).default;
-      
-
-      // Leaflet.markercluster for clustering 500+ pins
-      // We do manual clustering via grid-based approach for performance
+      const MarkerClusterGroup = (await import('leaflet.markercluster')).default;
 
       if (leafletMapRef.current) {
         leafletMapRef.current.remove();
@@ -60,9 +60,16 @@ export default function IndiaMap({ data, onStationSelect, selectedStation, searc
         { subdomains: 'abcd', maxZoom: 19 }
       ).addTo(map);
 
-      // Markers layer group
-      const markersLayer = L.layerGroup().addTo(map);
-      markersLayerRef.current = markersLayer;
+      // Create marker cluster group
+      const markerClusterGroup = new MarkerClusterGroup({
+        maxClusterRadius: 50,
+        disableClusteringAtZoom: 9,
+        chunkedLoading: true,
+        chunkSize: 100,
+        showCoverageOnHover: true,
+      });
+      markerClusterGroupRef.current = markerClusterGroup;
+      map.addLayer(markerClusterGroup);
       searchLayerRef.current = L.layerGroup().addTo(map);
 
       // Inject styles
@@ -92,22 +99,22 @@ export default function IndiaMap({ data, onStationSelect, selectedStation, searc
 
   // Update markers when data changes
   useEffect(() => {
-    if (!leafletMapRef.current || !markersLayerRef.current || !data.length) return;
+    if (!leafletMapRef.current || !markerClusterGroupRef.current || !data.length) return;
 
     const updateMarkers = async () => {
       const L = (await import('leaflet')).default;
-      markersLayerRef.current.clearLayers();
+      markerClusterGroupRef.current.clearLayers();
       setStationCount(data.length);
 
       const zoom = leafletMapRef.current.getZoom();
-      // At low zoom, show circles; at higher zoom show labeled pins
+      // At low zoom, show smaller circles; at higher zoom show labeled pins
       const showLabels = zoom >= 8;
 
       data.forEach(station => {
         const level = AQI_LEVELS[station.category as keyof typeof AQI_LEVELS];
         if (!level) return;
 
-        const size = showLabels ? 38 : 22;
+        const size = showLabels ? 38 : 24;
         const fontSize = showLabels ? '10px' : '8px';
 
         const icon = L.divIcon({
@@ -147,7 +154,7 @@ export default function IndiaMap({ data, onStationSelect, selectedStation, searc
 
         marker.bindPopup(popupHtml, { closeButton: false, className: 'vayu-popup' });
         marker.on('click', () => { if (onStationSelect) onStationSelect(station); });
-        marker.addTo(markersLayerRef.current);
+        markerClusterGroupRef.current.addLayer(marker);
       });
     };
 
