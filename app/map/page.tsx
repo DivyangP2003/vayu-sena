@@ -125,7 +125,7 @@ export default function MapPage() {
             </div>
           )}
 
-          <IndiaMap
+         <IndiaMap
   data={stations}
   onStationSelect={(station) => {
     const fullData = stations.find(
@@ -135,8 +135,8 @@ export default function MapPage() {
     );
     setSelectedStation(fullData || null);
   }}
-  selectedStation={selectedStation?.station}   // ✅ add this back
-  searchMarker={searchMarker}                 // ✅ keep this too
+  selectedStation={selectedStation?.station}
+  searchMarker={searchMarker}
 />
         </div>
 
