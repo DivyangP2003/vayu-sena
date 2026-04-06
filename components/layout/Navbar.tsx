@@ -2,13 +2,14 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
-import { Wind, Map, AlertTriangle, FileText, Info, Menu, X, Activity } from 'lucide-react';
+import { Wind, Map, AlertTriangle, FileText, Info, Menu, X, Activity, BookOpen } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const NAV_LINKS = [
   { href: '/', label: 'Home', icon: Activity },
   { href: '/dashboard', label: 'Dashboard', icon: Wind },
   { href: '/map', label: 'Live Map', icon: Map },
+  { href: '/education', label: 'Education', icon: BookOpen },
   { href: '/report', label: 'Report', icon: FileText },
   { href: '/alerts', label: 'Alerts', icon: AlertTriangle },
   { href: '/about', label: 'About', icon: Info },
