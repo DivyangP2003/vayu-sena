@@ -184,7 +184,7 @@ export const MOCK_NEWS = [
     category: 'general' as const,
   },
   {
-    title: 'Mumbai's Coastal Wind Pattern Brings Temporary AQI Relief, Says Study',
+    title: "Mumbai's Coastal Wind Pattern Brings Temporary AQI Relief, Says Study",
     description: 'Arabian Sea winds dropping AQI below 80 during monsoon — new research maps how sea-breeze circulation naturally cleanses Mumbai\'s air six months a year.',
     url: '#',
     source: 'Indian Express',
