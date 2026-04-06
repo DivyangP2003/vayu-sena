@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useRef } from 'react';
 import { AQIData, AQI_LEVELS } from '@/lib/types';
+import 'leaflet/dist/leaflet.css';
 
 interface IndiaMapProps {
   data: AQIData[];
@@ -18,7 +19,6 @@ export default function IndiaMap({ data, onCitySelect, selectedCity }: IndiaMapP
 
     const initMap = async () => {
       const L = (await import('leaflet')).default;
-      await import('leaflet/dist/leaflet.css');
 
       if (leafletMapRef.current) {
         leafletMapRef.current.remove();
