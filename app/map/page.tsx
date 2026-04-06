@@ -126,11 +126,18 @@ export default function MapPage() {
           )}
 
           <IndiaMap
-            data={stations}
-            onStationSelect={setSelectedStation}
-            selectedStation={selectedStation?.station}
-            searchMarker={searchMarker}
-          />
+  data={stations}
+  onStationSelect={(station) => {
+    const fullData = stations.find(
+      (s) =>
+        s.station === station.station &&
+        s.city === station.city
+    );
+    setSelectedStation(fullData || null);
+  }}
+  selectedStation={selectedStation?.station}   // ✅ add this back
+  searchMarker={searchMarker}                 // ✅ keep this too
+/>
         </div>
 
         {/* ── Side Panel ─────────────────────────────────────────────────── */}
