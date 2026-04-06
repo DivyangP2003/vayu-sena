@@ -1,80 +1,118 @@
+/**
+ * /api/aqi — Real-time CPCB CAAQMS data
+ *
+ * GET /api/aqi              → all 500+ stations, live
+ * GET /api/aqi?city=Delhi   → stations for a specific city
+ * GET /api/aqi?state=Delhi  → stations for a state
+ * GET /api/aqi?lat=28.6&lng=77.2&radius=50 → stations near coords
+ *
+ * Data source: data.gov.in CPCB resource 3b01bcb8-...
+ * Revalidates every 15 minutes (CPCB updates hourly).
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
+import {
+  fetchAllCPCBStations,
+  fetchCityStations,
+  findNearestStations,
+} from '@/lib/cpcbFetcher';
 import { generateAllCitiesAQI, generateMockAQI } from '@/lib/mockData';
-import { getAQICategory, INDIA_CITIES } from '@/lib/types';
 
-async function fetchOpenAQData(city: string) {
-  const apiKey = process.env.OPENAQ_API_KEY;
-  if (!apiKey || apiKey === 'your_openaq_api_key_here') return null;
-
-  try {
-    const cityCoords = INDIA_CITIES.find(c => c.name.toLowerCase() === city.toLowerCase());
-    if (!cityCoords) return null;
-
-    const url = `https://api.openaq.org/v3/locations?coordinates=${cityCoords.lat},${cityCoords.lng}&radius=25000&limit=5&order_by=lastUpdated&sort=desc`;
-    const res = await fetch(url, {
-      headers: { 'X-API-Key': apiKey },
-      next: { revalidate: 900 }, // 15 min cache
-    });
-
-    if (!res.ok) return null;
-    const data = await res.json();
-    if (!data.results?.length) return null;
-
-    const location = data.results[0];
-    const measurements = location.sensors || [];
-    const pm25 = measurements.find((s: { parameter: { name: string } }) => s.parameter?.name === 'pm25');
-    const pm10 = measurements.find((s: { parameter: { name: string } }) => s.parameter?.name === 'pm10');
-    const no2 = measurements.find((s: { parameter: { name: string } }) => s.parameter?.name === 'no2');
-
-    const aqiValue = pm25?.summary?.avg
-      ? Math.round(pm25.summary.avg * 2.5) // rough conversion
-      : generateMockAQI(city).aqi;
-
-    return {
-      city,
-      state: cityCoords.state,
-      station: location.name || `${city} Station`,
-      lat: cityCoords.lat,
-      lng: cityCoords.lng,
-      aqi: aqiValue,
-      category: getAQICategory(aqiValue),
-      pm25: pm25?.summary?.avg ? Math.round(pm25.summary.avg) : generateMockAQI(city).pm25,
-      pm10: pm10?.summary?.avg ? Math.round(pm10.summary.avg) : generateMockAQI(city).pm10,
-      no2: no2?.summary?.avg ? Math.round(no2.summary.avg) : generateMockAQI(city).no2,
-      so2: generateMockAQI(city).so2,
-      co: generateMockAQI(city).co,
-      o3: generateMockAQI(city).o3,
-      timestamp: new Date().toISOString(),
-      trend: 'stable' as const,
-      dominantSource: 'Vehicle Traffic',
-    };
-  } catch {
-    return null;
-  }
-}
+export const runtime = 'nodejs';
+export const revalidate = 900; // 15 min ISR
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
-  const city = searchParams.get('city');
+  const city    = searchParams.get('city');
+  const state   = searchParams.get('state');
+  const lat     = searchParams.get('lat');
+  const lng     = searchParams.get('lng');
+  const mock    = searchParams.get('mock') === '1';
+
+  // Allow forcing mock for dev
+  if (mock) {
+    if (city) {
+      return NextResponse.json({ data: [generateMockAQI(city)], source: 'mock', count: 1 });
+    }
+    const all = generateAllCitiesAQI();
+    return NextResponse.json({ data: all, source: 'mock', count: all.length });
+  }
 
   try {
-    if (city) {
-      // Try real API first
-      const realData = await fetchOpenAQData(city);
-      if (realData) {
-        return NextResponse.json({ data: realData, source: 'openaq' });
+    // ── Nearest stations by coordinates ──────────────────────────────────
+    if (lat && lng) {
+      const { stations, source, error } = await fetchAllCPCBStations();
+      if (source === 'error' || stations.length === 0) {
+        return NextResponse.json({
+          error: 'Could not fetch live data',
+          details: error,
+          fallback: 'Use ?mock=1 to get synthetic data',
+        }, { status: 503 });
       }
-      // Fallback to mock
-      return NextResponse.json({ data: generateMockAQI(city), source: 'mock' });
+      const nearest = findNearestStations(parseFloat(lat), parseFloat(lng), stations, 10);
+      return NextResponse.json({
+        data: nearest,
+        source: 'live_cpcb',
+        count: nearest.length,
+        queryType: 'nearest',
+      });
     }
 
-    // Return all cities
-    const allData = generateAllCitiesAQI();
-    return NextResponse.json({ data: allData, source: 'mock', count: allData.length });
-  } catch (error) {
-    return NextResponse.json(
-      { error: 'Failed to fetch AQI data', details: String(error) },
-      { status: 500 }
-    );
+    // ── Specific city ─────────────────────────────────────────────────────
+    if (city) {
+      const stations = await fetchCityStations(city);
+      if (stations.length === 0) {
+        // Fallback to mock if city not found in CPCB
+        return NextResponse.json({
+          data: [generateMockAQI(city)],
+          source: 'mock_fallback',
+          count: 1,
+          note: 'No live station found for this city — showing estimated data',
+        });
+      }
+      return NextResponse.json({
+        data: stations,
+        source: 'live_cpcb',
+        count: stations.length,
+        queryType: 'city',
+      });
+    }
+
+    // ── All stations ──────────────────────────────────────────────────────
+    const { stations, totalFetched, source, error } = await fetchAllCPCBStations();
+
+    if (source === 'error' || stations.length === 0) {
+      // Graceful fallback to mock
+      const mockData = generateAllCitiesAQI();
+      return NextResponse.json({
+        data: mockData,
+        source: 'mock_fallback',
+        count: mockData.length,
+        note: `Live data unavailable (${error || 'unknown error'}) — showing estimated data`,
+      });
+    }
+
+    // Filter by state if requested
+    const filtered = state
+      ? stations.filter(s => s.state.toLowerCase().includes(state.toLowerCase()))
+      : stations;
+
+    return NextResponse.json({
+      data: filtered,
+      source: 'live_cpcb',
+      count: filtered.length,
+      totalRecords: totalFetched,
+      queryType: state ? 'state' : 'all',
+      updatedAt: new Date().toISOString(),
+    });
+
+  } catch (err) {
+    const mockData = generateAllCitiesAQI();
+    return NextResponse.json({
+      data: mockData,
+      source: 'mock_fallback',
+      count: mockData.length,
+      error: String(err),
+    });
   }
 }
